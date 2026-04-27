@@ -1,0 +1,17 @@
+# Generated site
+site/
+
+# Data file (regenerated from source)
+data.json
+
+# Virtual environment
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# OS files
+.DS_Store
