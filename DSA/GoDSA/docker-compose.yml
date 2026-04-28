@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  jupyter-go:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: localhost/godsa_jupyter:latest
+    container_name: codingv2-jupyter-go
+    ports:
+      - "8890:8888"
+    volumes:
+      - .:/home/jovyan/work
+      - jupyter_go_data:/home/jovyan/.jupyter
+    working_dir: /home/jovyan/work
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - GOPATH=/home/jovyan/go
+      - NB_USER=jovyan
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+    command: >
+      jupyter lab
+      --ip=0.0.0.0
+      --port=8888
+      --no-browser
+      --notebook-dir=/home/jovyan/work
+      --NotebookApp.token=''
+      --NotebookApp.password=''
+    networks:
+      - godsa-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/lab"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
+
+volumes:
+  jupyter_go_data:
+
+networks:
+  godsa-network:
+    driver: bridge

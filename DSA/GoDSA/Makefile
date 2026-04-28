@@ -6,14 +6,15 @@ RED    := \033[0;31m
 NC     := \033[0m
 
 MACHINE_NAME := course-vm
+LAB_PORT     := 8890
 
 help:
-	@echo "$(GREEN)Jupyter Notebook Environment (Podman)$(NC)"
+	@echo "$(GREEN)Jupyter Lab — Go (gophernotes kernel, Podman)$(NC)"
 	@echo ""
 	@echo "$(YELLOW)First time setup:$(NC)"
 	@echo "  make vm-start   - Start the Podman machine"
-	@echo "  make build      - Build the Jupyter image"
-	@echo "  make start      - Start Jupyter Lab"
+	@echo "  make build      - Build the Jupyter + Go image"
+	@echo "  make start      - Start Jupyter Lab (port $(LAB_PORT))"
 	@echo ""
 	@echo "$(YELLOW)Daily usage:$(NC)"
 	@echo "  make vm-start   - Start the Podman machine"
@@ -23,19 +24,19 @@ help:
 	@echo ""
 	@echo "$(YELLOW)Other commands:$(NC)"
 	@echo "  make restart    - Restart Jupyter Lab"
-	@echo "  make logs       - View Jupyter Lab logs"
+	@echo "  make logs       - View logs"
 	@echo "  make ps         - Show running containers"
 	@echo "  make status     - Check environment status"
 	@echo "  make url        - Show Jupyter Lab URL"
 	@echo "  make clean      - Remove containers and volumes"
 	@echo "  make vm-status  - Show Podman machine status"
 	@echo ""
-
-# === VM Management ===
+	@echo "$(YELLOW)Note:$(NC) Primary stack 8888, Java 8889; this (Go) stack uses $(LAB_PORT)."
+	@echo ""
 
 vm-start:
 	@echo "$(YELLOW)Stopping any running Podman machines (only one can run at a time on macOS)...$(NC)"
-	@for vm in $$(podman machine list --format '{{.Name}}:{{.Running}}' | grep ':true' | cut -d: -f1); do \
+	@for vm in $$(podman machine list --format '{{.Name}}:{{.Running}}' | grep ':true' | cut -d: -f1 | sed 's/\*$$//'); do \
 		if [ "$$vm" != "$(MACHINE_NAME)" ]; then \
 			echo "Stopping $$vm..."; \
 			podman machine stop $$vm; \
@@ -58,8 +59,6 @@ vm-status:
 	@echo "$(GREEN)Active connection:$(NC)"
 	@podman system connection list
 
-# === Container Management ===
-
 start:
 	@echo "$(GREEN)Checking Podman machine connection...$(NC)"
 	@if podman machine inspect $(MACHINE_NAME) --format '{{.State}}' 2>/dev/null | grep -q "running"; then \
@@ -70,21 +69,21 @@ start:
 		exit 1; \
 	fi
 	@mkdir -p notebooks data
-	@echo "$(GREEN)Starting Jupyter Lab environment...$(NC)"
+	@echo "$(GREEN)Starting Jupyter Lab (Go)...$(NC)"
 	podman-compose up -d
 	@sleep 5
 	@echo "$(GREEN)✓ Environment started$(NC)"
 	@make url
 
 stop:
-	@echo "$(YELLOW)Stopping Jupyter Lab environment...$(NC)"
+	@echo "$(YELLOW)Stopping Jupyter Lab (Go)...$(NC)"
 	podman-compose down
 	@echo "$(GREEN)✓ Environment stopped$(NC)"
 
 restart: stop start
 
 logs:
-	podman-compose logs -f jupyter
+	podman-compose logs -f jupyter-go
 
 ps:
 	@echo "$(GREEN)Running containers:$(NC)"
@@ -94,17 +93,17 @@ status:
 	@echo "$(GREEN)Environment Status:$(NC)"
 	@podman-compose ps
 	@echo ""
-	@if [ -n "$$(podman-compose ps -q jupyter 2>/dev/null)" ]; then \
-		echo "$(GREEN)✓ Jupyter Lab is running$(NC)"; \
-		curl -s http://localhost:8888/lab > /dev/null && echo "$(GREEN)✓ Jupyter Lab is healthy$(NC)" || echo "$(YELLOW)⚠ Jupyter Lab is initializing...$(NC)"; \
+	@if [ -n "$$(podman-compose ps -q jupyter-go 2>/dev/null)" ]; then \
+		echo "$(GREEN)✓ Jupyter Lab (Go) is running$(NC)"; \
+		curl -s http://localhost:$(LAB_PORT)/lab > /dev/null && echo "$(GREEN)✓ Jupyter Lab is healthy$(NC)" || echo "$(YELLOW)⚠ Jupyter Lab is initializing...$(NC)"; \
 	else \
 		echo "$(RED)✗ Jupyter Lab is not running$(NC)"; \
 	fi
 
 url:
 	@echo ""
-	@echo "$(GREEN)Jupyter Lab is available at:$(NC)"
-	@echo "$(YELLOW)  http://localhost:8888/lab$(NC)"
+	@echo "$(GREEN)Jupyter Lab (Go) is available at:$(NC)"
+	@echo "$(YELLOW)  http://localhost:$(LAB_PORT)/lab$(NC)"
 	@echo ""
 
 clean:

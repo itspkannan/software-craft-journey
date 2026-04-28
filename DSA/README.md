@@ -1,71 +1,47 @@
-# Data Structures & Algorithms
+# Data structures & algorithms
 
-Personal coding practice with Jupyter notebooks - questions, test cases, and detailed solutions.
+Parallel Jupyter environments under this folder:
 
-## Quick Start
+| Subfolder | Language | Lab URL (defaults) |
+|-----------|----------|-------------------|
+| **[PythonDSA](PythonDSA/)** | Python (SciPy stack) | http://localhost:8888/lab |
+| **[JavaDSA](JavaDSA/)** | Java (IJava / JShell) | http://localhost:8889/lab |
+| **[GoDSA](GoDSA/)** | Go (gophernotes) | http://localhost:8890/lab |
+
+Each has its own `Dockerfile`, `docker-compose.yml`, `Makefile`, and `podman.md`. Topic layout (`linear/`, `nonlinear/`, `search/`, `notebooks/`) is shared so you can work the same subjects in whichever language you choose.
+
+## Quick start
+
+**Python**
 
 ```bash
-cd DSA
+cd DSA/PythonDSA
 make vm-start && make start
 ```
 
-Access at: **http://localhost:8888/lab** (no token required)
+**Java**
 
-See [podman.md](podman.md) for container setup and commands.
-
-## Structure
-
+```bash
+cd DSA/JavaDSA
+make vm-start && make start
 ```
 
-├── linear/
-│   ├── arrays_and_string/
-│   │   ├── concepts.ipynb
-│   │   ├── arrays_and_strings_questions.ipynb
-│   │   └── arrays_and_strings_solutions.ipynb
-│   ├── linked_list/
-│   └── stacks_queues/
-│
-├── nonlinear/
-│   ├── trees/
-│   ├── graphs/
-│   ├── heaps/
-│   ├── tries/
-│   └── backtracking/
-│
-├── search/
-│   ├── concepts.ipynb
-│   ├── binary_search_questions.ipynb
-│   └── binary_search_solutions.ipynb
-│
-└── notebooks/
+**Go**
+
+```bash
+cd DSA/GoDSA
+make vm-start && make build && make start
 ```
 
-Each topic contains:
-- `concepts.ipynb` - Theory and patterns
-- `*_questions.ipynb` - Practice problems with test cases
-- `*_solutions.ipynb` - Solutions with explanations
+You can run all three stacks at once (different host ports).
 
-## How to Practice
+## Maintainer: refresh Java / Go topic notebooks
 
-1. Start with the **concepts** notebook for theory
-2. Open the **questions** notebook
-3. Read the problem and implement your solution
-4. Run the test cases to verify
-5. Check the **solutions** notebook if stuck
+Optional scripts that overwrite generated topic notebooks in each track (they skip each track’s `notebooks/getting_started.ipynb`). From the repository root:
 
-## Topics Covered
+```bash
+./DSA/scripts/refresh_java_notebooks.py
+./DSA/scripts/refresh_go_notebooks.py
+```
 
-### Linear
-- **Arrays & Strings:** Two pointers, sliding window, hash maps, prefix sum
-- **Linked Lists:** Reversal, cycle detection, merge, fast/slow pointers
-- **Stacks & Queues:** Monotonic stack, valid parentheses, BFS patterns
-
-### Non-Linear
-- **Trees:** DFS/BFS traversals, BST operations, LCA, serialization
-- **Graphs:** Grid traversal, cycle detection, topological sort, connected components
-- **Heaps:** Priority queues, top-K problems, merge K sorted lists
-- **Tries:** Prefix matching, autocomplete, word search
-- **Backtracking:** Subsets, permutations, combinations, N-Queens
-
-### Search
-- **Binary Search:** Search space reduction, rotated arrays, finding boundaries
+If `./…` fails with “permission denied”, mark the scripts executable once from the repo root: `chmod +x DSA/scripts/refresh_java_notebooks.py DSA/scripts/refresh_go_notebooks.py`.

@@ -10,7 +10,7 @@ Jupyter Lab runs in a Podman container using a shared VM (`course-vm`).
 ## First Time Setup
 
 ```bash
-cd DSA
+cd DSA/PythonDSA
 
 # Start the Podman VM
 make vm-start
@@ -25,7 +25,7 @@ make start
 ## Daily Usage
 
 ```bash
-cd DSA
+cd DSA/PythonDSA
 
 # Start
 make vm-start
