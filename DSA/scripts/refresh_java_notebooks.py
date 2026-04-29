@@ -15,6 +15,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_SCRIPTS = Path(__file__).resolve().parent
+if str(_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS))
+from java_solution_emitter import emit_solution_function_java
+
 # refresh_java_notebooks.py lives at DSA/scripts/ → repo root is parents[2]
 ROOT = Path(__file__).resolve().parents[2]
 PY_DSA = ROOT / "DSA" / "PythonDSA"
@@ -103,10 +108,14 @@ def annotation_to_java(ann: ast.expr | None) -> str:
                 return "List<String>"
             if isinstance(inner, ast.Subscript) and isinstance(inner.value, ast.Name) and inner.value.id == "list":
                 inner2 = unwrap_slice(inner.slice)
+                if isinstance(inner2, ast.Name) and inner2.id == "int":
+                    return "List<List<Integer>>"
                 if isinstance(inner2, ast.Name) and inner2.id == "str":
                     return "List<List<String>>"
             j = annotation_to_java(inner)
-            return "List<" + inner_box(j) + ">" if j != "int[]" else "List<Integer>"
+            if j == "int[]":
+                return "List<List<Integer>>"
+            return "List<" + inner_box(j) + ">"
         if isinstance(val, ast.Name) and val.id == "dict":
             return "Map<String, Object>"
     if isinstance(ann, ast.Tuple):
@@ -379,10 +388,11 @@ def clone_markdown(cell: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def spec_cell_to_java(src: str) -> str:
+def spec_cell_to_java(src: str, *, solutions: bool = False) -> str:
     src = src.rstrip() + "\n"
     lines = [_neutralize_markdown_line(ln) for ln in src.splitlines()]
-    py_comment = "/*\n * --- Original exercise specification (reference) ---\n" + "".join(
+    title = "Reference solution (notation)" if solutions else "Original exercise specification (reference)"
+    py_comment = f"/*\n * --- {title} ---\n" + "".join(
         " * " + (ln.replace("*/", "* /") + "\n") for ln in lines
     ) + " */\n\n"
 
@@ -400,7 +410,10 @@ def spec_cell_to_java(src: str) -> str:
                 names.append("from " + node.module)
             java_chunks.append("// Source imports: " + ast.unparse(node).replace("\n", " "))
         elif isinstance(node, ast.FunctionDef):
-            java_chunks.append(function_to_java(node))
+            if solutions:
+                java_chunks.append(emit_solution_function_java(node))
+            else:
+                java_chunks.append(function_to_java(node))
         elif isinstance(node, ast.ClassDef):
             java_chunks.append(class_to_java(node))
         elif isinstance(node, ast.Assign):
@@ -461,6 +474,7 @@ def transform_notebook_for_java(py_path: Path) -> dict[str, Any] | None:
     rel = py_path.relative_to(PY_DSA)
     if rel.as_posix() == "notebooks/getting_started.ipynb":
         return None
+    solutions = py_path.name.endswith("_solutions.ipynb")
     data = json.loads(py_path.read_text(encoding="utf-8"))
     out_cells: list[dict[str, Any]] = []
     header_done = False
@@ -476,7 +490,7 @@ def transform_notebook_for_java(py_path: Path) -> dict[str, Any] | None:
         if not header_done:
             out_cells.append(make_code_cell(HEADER))
             header_done = True
-        out_cells.append(make_code_cell(spec_cell_to_java(src)))
+        out_cells.append(make_code_cell(spec_cell_to_java(src, solutions=solutions)))
     return {
         "cells": out_cells,
         "metadata": JAVA_META,

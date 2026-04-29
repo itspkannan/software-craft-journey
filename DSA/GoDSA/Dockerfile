@@ -28,12 +28,8 @@ USER root
 
 RUN mkdir -p /opt/conda/share/jupyter/kernels/gophernotes \
     && printf '%s\n' \
-'{
- "argv": ["/home/jovyan/go/bin/gophernotes", "{connection_file}"],
- "display_name": "Go",
- "language": "go",
- "name": "go"
-}' > /opt/conda/share/jupyter/kernels/gophernotes/kernel.json \
+        '{"argv":["/home/jovyan/go/bin/gophernotes","{connection_file}"],"display_name":"Go","language":"go","name":"go"}' \
+        > /opt/conda/share/jupyter/kernels/gophernotes/kernel.json \
     && chown -R ${NB_UID}:${NB_UID} /opt/conda/share/jupyter/kernels/gophernotes
 
 USER ${NB_UID}

@@ -113,5 +113,5 @@ clean:
 
 build:
 	@echo "$(GREEN)Building Docker image for Podman...$(NC)"
-	podman-compose build --no-cache
+	BUILDAH_FORMAT=docker podman-compose build --no-cache
 	@echo "$(GREEN)✓ Build complete$(NC)"

@@ -2,9 +2,10 @@
 """
 Rebuild topic notebooks under DSA/GoDSA (maintainer tool).
 
-Markdown cells are copied and lightly adjusted for this track. Each specification code cell
-becomes one Go cell: a block comment with the reference spec, then Go stubs and tests where
-automated translation applies.
+Markdown cells are copied and lightly adjusted for this track. Code cells become one Go cell
+with a block comment and generated Go. `*_solutions.ipynb` uses a solution emitter (working Go
+when translation succeeds, otherwise `//` reference steps plus a default return) so explanations
+stay in markdown and implementations stay visible in code.
 """
 from __future__ import annotations
 
@@ -14,6 +15,11 @@ import re
 import sys
 from pathlib import Path
 from typing import Any
+
+_SCRIPTS = Path(__file__).resolve().parent
+if str(_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS))
+from go_solution_emitter import emit_solution_function_go
 
 # refresh_go_notebooks.py lives at DSA/scripts/ → repo root is parents[2]
 ROOT = Path(__file__).resolve().parents[2]
@@ -34,7 +40,19 @@ HEADER = """\
 import (
 	"fmt"
 	"reflect"
+	"strings"
+	"unicode"
 )
+
+func mapHasIntInt(m map[int]int, k int) bool {
+	_, ok := m[k]
+	return ok
+}
+
+func mapHasByteInt(m map[byte]int, k byte) bool {
+	_, ok := m[k]
+	return ok
+}
 
 func eq(msg string, a, b interface{}) {
 	if !reflect.DeepEqual(a, b) {
@@ -104,9 +122,13 @@ def annotation_to_go(ann: ast.expr | None) -> str:
                 return "[]string"
             if isinstance(inner, ast.Subscript) and isinstance(inner.value, ast.Name) and inner.value.id == "list":
                 inner2 = unwrap_slice(inner.slice)
+                if isinstance(inner2, ast.Name) and inner2.id == "int":
+                    return "[][]int"
                 if isinstance(inner2, ast.Name) and inner2.id == "str":
                     return "[][]string"
             j = annotation_to_go(inner)
+            if j == "[]int":
+                return "[][]int"
             if j == "int":
                 return "[]int"
             if j == "string":
@@ -354,10 +376,11 @@ def clone_markdown(cell: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def spec_cell_to_go(src: str) -> str:
+def spec_cell_to_go(src: str, *, solutions: bool = False) -> str:
     src = src.rstrip() + "\n"
     lines = [_neutralize_markdown_line(ln) for ln in src.splitlines()]
-    py_comment = "/*\n * --- Original exercise specification (reference) ---\n" + "".join(
+    title = "Reference solution (notation)" if solutions else "Original exercise specification (reference)"
+    py_comment = f"/*\n * --- {title} ---\n" + "".join(
         " * " + (ln.replace("*/", "* /") + "\n") for ln in lines
     ) + " */\n\n"
 
@@ -372,7 +395,10 @@ def spec_cell_to_go(src: str) -> str:
         if isinstance(node, ast.Import | ast.ImportFrom):
             go_chunks.append("// Source imports: " + ast.unparse(node).replace("\n", " "))
         elif isinstance(node, ast.FunctionDef):
-            go_chunks.append(function_to_go(node))
+            if solutions:
+                go_chunks.append(emit_solution_function_go(node))
+            else:
+                go_chunks.append(function_to_go(node))
         elif isinstance(node, ast.ClassDef):
             go_chunks.append(class_to_go(node))
         elif isinstance(node, ast.Assign):
@@ -433,6 +459,7 @@ def transform_notebook_for_go(py_path: Path) -> dict[str, Any] | None:
     rel = py_path.relative_to(PY_DSA)
     if rel.as_posix() == "notebooks/getting_started.ipynb":
         return None
+    solutions = py_path.name.endswith("_solutions.ipynb")
     data = json.loads(py_path.read_text(encoding="utf-8"))
     out_cells: list[dict[str, Any]] = []
     header_done = False
@@ -448,7 +475,7 @@ def transform_notebook_for_go(py_path: Path) -> dict[str, Any] | None:
         if not header_done:
             out_cells.append(make_code_cell(HEADER))
             header_done = True
-        out_cells.append(make_code_cell(spec_cell_to_go(src)))
+        out_cells.append(make_code_cell(spec_cell_to_go(src, solutions=solutions)))
     return {
         "cells": out_cells,
         "metadata": GO_META,

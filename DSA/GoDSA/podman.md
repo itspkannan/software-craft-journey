@@ -48,6 +48,8 @@ make vm-stop
 
 ## Troubleshooting
 
+**Build logs: “SHELL / HEALTHCHECK is not supported for OCI image format”:** The Jupyter base image uses Dockerfile instructions that OCI manifests omit. `make build` sets `BUILDAH_FORMAT=docker` so Podman uses the Docker image schema and those warnings go away. If you run `podman-compose build` by hand, use the same prefix: `BUILDAH_FORMAT=docker podman-compose build`.
+
 **Kernel “Go” missing:** `make clean && make build && make start`.
 
 **Port in use:** Change `8890:8888` in `docker-compose.yml` and `LAB_PORT` in the `Makefile`.

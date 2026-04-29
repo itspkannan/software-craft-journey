@@ -21,6 +21,8 @@ Open **http://localhost:8890/lab** (no token). Choose the **Go** kernel for topi
 
 Same tree as the other tracks (`linear/`, `nonlinear/`, `search/`, `notebooks/`, `data/`). Topic workbooks live under each topic folder.
 
+`*_solutions.ipynb` files keep the same **markdown** as the course tree (problem framing, **Approach**, **Complexity**, and walkthroughs). Code cells add a **reference block comment** plus **Go** where the refresh tool can emit it; otherwise the full solution appears as **`//` lines** (course notation) with a compiling default return so you still have the logic and tests in one place.
+
 ## Refreshing topic notebooks
 
 Maintainers can rebuild all topic `*.ipynb` files in this tree (except `notebooks/getting_started.ipynb`) from the repository root:
